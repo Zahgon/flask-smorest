@@ -1,38 +1,16 @@
 """Response processor"""
-
 import http
 from collections import abc
 from copy import deepcopy
 from functools import wraps
-
 from flask import current_app, jsonify
 from werkzeug import Response
-
-from .utils import (
-    deepupdate,
-    get_appcontext,
-    prepare_response,
-    remove_none,
-    resolve_schema_instance,
-    set_status_and_headers_in_response,
-    unpack_tuple_response,
-)
-
+from .utils import deepupdate, get_appcontext, prepare_response, remove_none, resolve_schema_instance, set_status_and_headers_in_response, unpack_tuple_response
 
 class ResponseMixin:
     """Extend Blueprint to add response handling"""
 
-    def response(
-        self,
-        status_code,
-        schema=None,
-        *,
-        content_type=None,
-        description=None,
-        example=None,
-        examples=None,
-        headers=None,
-    ):
+    def response(self, status_code, schema=None, *, content_type=None, description=None, example=None, examples=None, headers=None):
         """Decorator generating an endpoint response
 
         :param int|str|HTTPStatus status_code: HTTP status code.
@@ -64,42 +42,9 @@ class ResponseMixin:
 
         See :doc:`Response <response>`.
         """
-        schema = resolve_schema_instance(schema)
+        pass
 
-        # Document response (schema, description,...) in the API doc
-        doc_schema = self._make_doc_response_schema(schema)
-        if description is None:
-            description = http.HTTPStatus(int(status_code)).phrase
-        resp_doc = remove_none(
-            {
-                "schema": doc_schema,
-                "description": description,
-                "example": example,
-                "examples": examples,
-                "headers": headers,
-            }
-        )
-        resp_doc["content_type"] = content_type
-
-        def decorator(func):
-            @wraps(func)
-            pass
-
-        return decorator
-
-    def alt_response(
-        self,
-        status_code,
-        response=None,
-        *,
-        schema=None,
-        content_type=None,
-        description=None,
-        example=None,
-        examples=None,
-        headers=None,
-        success=False,
-    ):
+    def alt_response(self, status_code, response=None, *, schema=None, content_type=None, description=None, example=None, examples=None, headers=None, success=False):
         """Decorator documenting an alternative response
 
         :param int|str|HTTPStatus status_code: HTTP status code.
@@ -144,7 +89,7 @@ class ResponseMixin:
                         )
                     return None
         """
-        return schema
+        pass
 
     @staticmethod
     def _prepare_response_content(data):
@@ -160,7 +105,7 @@ class ResponseMixin:
                         return {"data": data}
                     return None
         """
-        return data
+        pass
 
     @staticmethod
     def _prepare_response_doc(doc, doc_info, *, api, spec, **kwargs):

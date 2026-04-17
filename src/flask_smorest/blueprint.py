@@ -38,78 +38,31 @@ Documentation process works in several steps:
 
   - Endpoints documentation is registered in the APISpec object.
 """
-
 from copy import deepcopy
 from functools import wraps
-
 from flask import Blueprint as FlaskBlueprint
 from flask import current_app
 from flask.views import MethodView
-
 from .arguments import ArgumentsMixin
 from .etag import EtagMixin
 from .pagination import PaginationMixin
 from .response import ResponseMixin
 from .utils import deepupdate, load_info_from_docstring
 
-
-class Blueprint(
-    FlaskBlueprint, ArgumentsMixin, ResponseMixin, PaginationMixin, EtagMixin
-):
+class Blueprint(FlaskBlueprint, ArgumentsMixin, ResponseMixin, PaginationMixin, EtagMixin):
     """Blueprint that registers info in API documentation"""
-
-    # Order in which the methods are presented in the spec
-    HTTP_METHODS = ["OPTIONS", "HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"]
-
-    DEFAULT_LOCATION_CONTENT_TYPE_MAPPING = {
-        "json": "application/json",
-        "form": "application/x-www-form-urlencoded",
-        "files": "multipart/form-data",
-    }
-
-    DOCSTRING_INFO_DELIMITER = "---"
+    HTTP_METHODS = ['OPTIONS', 'HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+    DEFAULT_LOCATION_CONTENT_TYPE_MAPPING = {'json': 'application/json', 'form': 'application/x-www-form-urlencoded', 'files': 'multipart/form-data'}
+    DOCSTRING_INFO_DELIMITER = '---'
 
     def __init__(self, *args, **kwargs):
-        self.description = kwargs.pop("description", "")
-
+        self.description = kwargs.pop('description', '')
         super().__init__(*args, **kwargs)
-
-        # _docs stores information used at init time to produce documentation.
-        # For each endpoint, for each method, each feature stores info in there
-        # to be is used by a dedicated _prepare_*_doc callback. An extra
-        # "parameters" entry is added to store common route parameters doc.
-        # {
-        #     endpoint: {
-        #         'parameters: [list of common route parameters],
-        #         'get': {
-        #             'response': { info used by response decorator to produce doc},
-        #             'argument': { info used by arguments decorator to produce doc},
-        #             ...
-        #         'post': ...,
-        #         ...
-        #     },
-        #     ...
-        # }
         self._docs = {}
         self._endpoints = []
-        self._prepare_doc_cbks = [
-            self._prepare_arguments_doc,
-            self._prepare_response_doc,
-            self._prepare_pagination_doc,
-            self._prepare_etag_doc,
-        ]
+        self._prepare_doc_cbks = [self._prepare_arguments_doc, self._prepare_response_doc, self._prepare_pagination_doc, self._prepare_etag_doc]
 
-    def add_url_rule(
-        self,
-        rule,
-        endpoint=None,
-        view_func=None,
-        provide_automatic_options=None,
-        *,
-        parameters=None,
-        tags=None,
-        **options,
-    ):
+    def add_url_rule(self, rule, endpoint=None, view_func=None, provide_automatic_options=None, *, parameters=None, tags=None, **options):
         """Register url rule in application
 
         Also stores doc info for later registration
@@ -128,38 +81,14 @@ class Blueprint(
         :param options: Options to be forwarded to the underlying
             :class:`werkzeug.routing.Rule <Rule>` object.
         """
-        if view_func is None:
-            raise TypeError("view_func must be provided")
-
-        if endpoint is None:
-            endpoint = view_func.__name__
-
-        # Ensure endpoint name is unique
-        # - to avoid a name clash when registering a MethodView
-        # - to use it as a key internally in endpoint -> doc mapping
-        if endpoint in self._endpoints:
-            endpoint = f"{endpoint}_{len(self._endpoints)}"
-        self._endpoints.append(endpoint)
-
-        if isinstance(view_func, type(MethodView)):
-            func = view_func.as_view(endpoint)
-        else:
-            func = view_func
-
-        # Add URL rule in Flask and store endpoint documentation
-        super().add_url_rule(rule, endpoint, func, **options)
-        self._store_endpoint_docs(endpoint, view_func, parameters, tags, **options)
+        pass
 
     def route(self, rule, *, parameters=None, tags=None, **options):
         """Decorator to register view function in application and documentation
 
         Calls :meth:`add_url_rule <Blueprint.add_url_rule>`.
         """
-
-        def decorator(func):
-            pass
-
-        return decorator
+        pass
 
     def register_blueprint(self, blueprint, **options):
         """Register a nested blueprint in application
@@ -178,39 +107,7 @@ class Blueprint(
 
     def _store_endpoint_docs(self, endpoint, obj, parameters, tags, **options):
         """Store view or function doc info"""
-
-        endpoint_doc_info = self._docs.setdefault(endpoint, {})
-
-        def store_method_docs(method, function):
-            """Add auto and manual doc to table for later registration"""
-            # Get documentation from decorators
-            # Deepcopy doc info as it may be used for several methods and it
-            # may be mutated in apispec
-            doc = deepcopy(getattr(function, "_apidoc", {}))
-            # Get summary/description from docstring
-            doc["docstring"] = load_info_from_docstring(
-                function.__doc__, delimiter=self.DOCSTRING_INFO_DELIMITER
-            )
-            # Tags for this resource
-            doc["tags"] = tags
-            # Store function doc infos for later processing/registration
-            endpoint_doc_info[method.lower()] = doc
-
-        # MethodView (class)
-        if isinstance(obj, type(MethodView)):
-            for method in self.HTTP_METHODS:
-                if method in obj.methods:
-                    if "methods" not in options or method in options["methods"]:
-                        func = getattr(obj, method.lower())
-                        store_method_docs(method, func)
-        # Function
-        else:
-            for method in self.HTTP_METHODS:
-                if method in options.get("methods", ("GET",)):
-                    store_method_docs(method, obj)
-
-        # Store parameters doc info from route decorator
-        endpoint_doc_info["parameters"] = parameters
+        pass
 
     def register_views_in_doc(self, api, app, spec, *, name, parameters):
         """Register views information in documentation
@@ -237,12 +134,7 @@ class Blueprint(
                 def get(...):
                     ...
         """
-
-        def decorator(func):
-            @wraps(func)
-            pass
-
-        return decorator
+        pass
 
     def _decorate_view_func_or_method_view(self, decorator, obj):
         """Apply decorator to view func or MethodView HTTP methods"""

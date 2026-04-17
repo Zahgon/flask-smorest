@@ -1,52 +1,27 @@
 """ETag feature"""
-
 import hashlib
 import http
 import warnings
 from copy import deepcopy
 from functools import wraps
-
 from flask import current_app, json, request
-
 from .exceptions import NotModified, PreconditionFailed, PreconditionRequired
 from .globals import current_api
 from .utils import deepupdate, get_appcontext, resolve_schema_instance
-
-IF_NONE_MATCH_HEADER = {
-    "name": "If-None-Match",
-    "in": "header",
-    "description": "Tag to check against",
-    "schema": {"type": "string"},
-}
-
-IF_MATCH_HEADER = {
-    "name": "If-Match",
-    "in": "header",
-    "required": True,
-    "description": "Tag to check against",
-    "schema": {"type": "string"},
-}
-
-ETAG_HEADER = {
-    "description": "Tag for the returned entry",
-    "schema": {"type": "string"},
-}
-
+IF_NONE_MATCH_HEADER = {'name': 'If-None-Match', 'in': 'header', 'description': 'Tag to check against', 'schema': {'type': 'string'}}
+IF_MATCH_HEADER = {'name': 'If-Match', 'in': 'header', 'required': True, 'description': 'Tag to check against', 'schema': {'type': 'string'}}
+ETAG_HEADER = {'description': 'Tag for the returned entry', 'schema': {'type': 'string'}}
 
 def _get_etag_ctx():
     """Get ETag section of AppContext"""
-    return get_appcontext().setdefault("etag", {})
-
+    pass
 
 class EtagMixin:
     """Extend Blueprint to add ETag handling"""
-
-    METHODS_CHECKING_NOT_MODIFIED = ["GET", "HEAD"]
-    METHODS_NEEDING_CHECK_ETAG = ["PUT", "PATCH", "DELETE"]
-    METHODS_ALLOWING_SET_ETAG = ["GET", "HEAD", "POST", "PUT", "PATCH"]
-
-    # Headers to include in ETag computation
-    ETAG_INCLUDE_HEADERS = ["X-Pagination"]
+    METHODS_CHECKING_NOT_MODIFIED = ['GET', 'HEAD']
+    METHODS_NEEDING_CHECK_ETAG = ['PUT', 'PATCH', 'DELETE']
+    METHODS_ALLOWING_SET_ETAG = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH']
+    ETAG_INCLUDE_HEADERS = ['X-Pagination']
 
     def etag(self, obj):
         """Decorator adding ETag management to the endpoint
@@ -75,10 +50,7 @@ class EtagMixin:
 
         Data is JSON serialized before hashing using the Flask app JSON serializer.
         """
-        if extra_data:
-            etag_data = (etag_data, extra_data)
-        data = json.dumps(etag_data, sort_keys=True)
-        return hashlib.sha1(bytes(data, "utf-8")).hexdigest()
+        pass
 
     def _check_precondition(self):
         """Check If-Match header is there
@@ -107,7 +79,7 @@ class EtagMixin:
 
     def _is_etag_enabled(self):
         """Return True if ETag feature is enabled api-wise"""
-        return not current_api.config.get("ETAG_DISABLED", False)
+        pass
 
     def _verify_check_etag(self):
         """Verify check_etag was called in resource code
@@ -125,11 +97,7 @@ class EtagMixin:
 
         Only applies to methods returning a 304 (Not Modified) code
         """
-        if (
-            request.method in self.METHODS_CHECKING_NOT_MODIFIED
-            and etag in request.if_none_match
-        ):
-            raise NotModified
+        pass
 
     def set_etag(self, etag_data, etag_schema=None):
         """Set ETag for this response
@@ -143,18 +111,7 @@ class EtagMixin:
         Issues a warning if called in a method other than GET, HEAD, POST, PUT
         or PATCH.
         """
-        if request.method not in self.METHODS_ALLOWING_SET_ETAG:
-            warnings.warn(
-                f"ETag cannot be set on {request.method} request.",
-                stacklevel=2,
-            )
-        if self._is_etag_enabled():
-            if etag_schema is not None:
-                etag_data = resolve_schema_instance(etag_schema).dump(etag_data)
-            new_etag = self._generate_etag(etag_data)
-            self._check_not_modified(new_etag)
-            # Store ETag in AppContext to add it to response headers later on
-            _get_etag_ctx()["etag"] = new_etag
+        pass
 
     def _set_etag_in_response(self, response):
         """Set ETag in response object

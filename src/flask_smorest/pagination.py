@@ -8,20 +8,15 @@ Two pagination modes are supported:
 - Post-pagination: the resource returns an iterator (typically a DB cursor) and
   a pager is provided to paginate the data and get the total number of items.
 """
-
 import http
 import json
 import warnings
 from copy import deepcopy
 from functools import wraps
-
 from flask import current_app, request
-
 import marshmallow as ma
 from webargs.flaskparser import FlaskParser
-
 from .utils import unpack_tuple_response
-
 
 class PaginationParameters:
     """Holds pagination arguments
@@ -46,35 +41,11 @@ class PaginationParameters:
         pass
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}"
-            f"(page={self.page!r},page_size={self.page_size!r})"
-        )
-
+        return f'{self.__class__.__name__}(page={self.page!r},page_size={self.page_size!r})'
 
 def _pagination_parameters_schema_factory(def_page, def_page_size, def_max_page_size):
     """Generate a PaginationParametersSchema"""
-
-    class PaginationParametersSchema(ma.Schema):
-        """Deserializes pagination params into PaginationParameters"""
-
-        class Meta:
-            unknown = ma.EXCLUDE
-
-        page = ma.fields.Integer(
-            load_default=def_page, validate=ma.validate.Range(min=1)
-        )
-        page_size = ma.fields.Integer(
-            load_default=def_page_size,
-            validate=ma.validate.Range(min=1, max=def_max_page_size),
-        )
-
-        @ma.post_load
-        def make_paginator(self, data, **kwargs):
-            pass
-
-    return PaginationParametersSchema
-
+    pass
 
 class Page:
     """Pager for simple types such as lists.
@@ -94,22 +65,14 @@ class Page:
 
     @property
     def items(self):
-        return list(
-            self.collection[
-                self.page_params.first_item : self.page_params.last_item + 1
-            ]
-        )
+        return list(self.collection[self.page_params.first_item:self.page_params.last_item + 1])
 
     @property
     def item_count(self):
         pass
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}"
-            f"(collection={self.collection!r},page_params={self.page_params!r})"
-        )
-
+        return f'{self.__class__.__name__}(collection={self.collection!r},page_params={self.page_params!r})'
 
 class PaginationMetadataSchema(ma.Schema):
     """Pagination metadata schema
@@ -117,34 +80,20 @@ class PaginationMetadataSchema(ma.Schema):
     Used to serialize pagination metadata.
     Its main purpose is to document the pagination metadata.
     """
-
-    total = ma.fields.Int(metadata={"description": "Total number of items."})
-    total_pages = ma.fields.Int(metadata={"description": "Total number of pages."})
-    first_page = ma.fields.Int(metadata={"description": "First available page number."})
-    last_page = ma.fields.Int(metadata={"description": "Last available page number."})
-    page = ma.fields.Int(metadata={"description": "Current page number."})
-    previous_page = ma.fields.Int(metadata={"description": "Previous page number."})
-    next_page = ma.fields.Int(metadata={"description": "Next page number."})
-
-
-PAGINATION_HEADER = {
-    "description": "Pagination metadata",
-    "schema": PaginationMetadataSchema,
-}
-
+    total = ma.fields.Int(metadata={'description': 'Total number of items.'})
+    total_pages = ma.fields.Int(metadata={'description': 'Total number of pages.'})
+    first_page = ma.fields.Int(metadata={'description': 'First available page number.'})
+    last_page = ma.fields.Int(metadata={'description': 'Last available page number.'})
+    page = ma.fields.Int(metadata={'description': 'Current page number.'})
+    previous_page = ma.fields.Int(metadata={'description': 'Previous page number.'})
+    next_page = ma.fields.Int(metadata={'description': 'Next page number.'})
+PAGINATION_HEADER = {'description': 'Pagination metadata', 'schema': PaginationMetadataSchema}
 
 class PaginationMixin:
     """Extend Blueprint to add Pagination feature"""
-
     PAGINATION_ARGUMENTS_PARSER = FlaskParser()
-
-    # Name of field to use for pagination metadata response header
-    # Can be overridden. If None, no pagination header is returned.
-    PAGINATION_HEADER_NAME = "X-Pagination"
-
-    # Global default pagination parameters
-    # Can be overridden to provide custom defaults
-    DEFAULT_PAGINATION_PARAMETERS = {"page": 1, "page_size": 10, "max_page_size": 100}
+    PAGINATION_HEADER_NAME = 'X-Pagination'
+    DEFAULT_PAGINATION_PARAMETERS = {'page': 1, 'page_size': 10, 'max_page_size': 100}
 
     def paginate(self, pager=None, *, page=None, page_size=None, max_page_size=None):
         """Decorator adding pagination to the endpoint
@@ -165,28 +114,7 @@ class PaginationMixin:
 
         See :doc:`Pagination <pagination>`.
         """
-        if page is None:
-            page = self.DEFAULT_PAGINATION_PARAMETERS["page"]
-        if page_size is None:
-            page_size = self.DEFAULT_PAGINATION_PARAMETERS["page_size"]
-        if max_page_size is None:
-            max_page_size = self.DEFAULT_PAGINATION_PARAMETERS["max_page_size"]
-        page_params_schema = _pagination_parameters_schema_factory(
-            page, page_size, max_page_size
-        )
-
-        parameters = {
-            "in": "query",
-            "schema": page_params_schema,
-        }
-
-        error_status_code = self.PAGINATION_ARGUMENTS_PARSER.DEFAULT_VALIDATION_STATUS
-
-        def decorator(func):
-            @wraps(func)
-            pass
-
-        return decorator
+        pass
 
     @staticmethod
     def _make_pagination_metadata(page, page_size, item_count):
@@ -194,40 +122,14 @@ class PaginationMixin:
 
         Override this to use another pagination metadata structure
         """
-        page_metadata = {}
-        page_metadata["total"] = item_count
-        if item_count == 0:
-            page_metadata["total_pages"] = 0
-        else:
-            # First / last page, page count
-            page_count = ((item_count - 1) // page_size) + 1
-            first_page = 1
-            last_page = page_count
-            page_metadata["total_pages"] = page_count
-            page_metadata["first_page"] = first_page
-            page_metadata["last_page"] = last_page
-            # Page, previous / next page
-            if page <= last_page:
-                page_metadata["page"] = page
-                if page > first_page:
-                    page_metadata["previous_page"] = page - 1
-                if page < last_page:
-                    page_metadata["next_page"] = page + 1
-        return PaginationMetadataSchema().dump(page_metadata)
+        pass
 
     def _set_pagination_metadata(self, page_params, result, headers):
         """Add pagination metadata to headers
 
         Override this to set pagination data another way
         """
-        if headers is None:
-            headers = {}
-        headers[self.PAGINATION_HEADER_NAME] = json.dumps(
-            self._make_pagination_metadata(
-                page_params.page, page_params.page_size, page_params.item_count
-            )
-        )
-        return result, headers
+        pass
 
     def _document_pagination_metadata(self, spec, resp_doc):
         """Document pagination metadata header

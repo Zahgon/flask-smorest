@@ -1,33 +1,19 @@
 """Utils"""
-
 from collections import abc
-
 from flask import g
 from werkzeug.datastructures import Headers
-
 from apispec.utils import dedent, trim_docstring
 
-
-# https://stackoverflow.com/questions/3232943/
 def deepupdate(original, update):
     """Recursively update a dict.
 
     Subdict's won't be overwritten but also updated.
     """
-    if not isinstance(original, abc.Mapping):
-        return update
-    for key, value in update.items():
-        if isinstance(value, abc.Mapping):
-            original[key] = deepupdate(original.get(key, {}), value)
-        else:
-            original[key] = value
-    return original
-
+    pass
 
 def remove_none(mapping):
     """Remove None values in a dict"""
-    return {k: v for k, v in mapping.items() if v is not None}
-
+    pass
 
 def resolve_schema_instance(schema):
     """Return schema instance for given schema (instance or class).
@@ -35,98 +21,32 @@ def resolve_schema_instance(schema):
     :param type|Schema schema: marshmallow.Schema instance or class
     :return: schema instance of given schema
     """
-    return schema() if isinstance(schema, type) else schema
-
+    pass
 
 def get_appcontext():
     """Get extension section in flask g"""
-    return g.setdefault("_flask_smorest", {})
+    pass
 
-
-def load_info_from_docstring(docstring, *, delimiter="---"):
+def load_info_from_docstring(docstring, *, delimiter='---'):
     """Load summary and description from docstring
 
     :param str delimiter: Summary and description information delimiter.
     If a line starts with this string, this line and the lines after are
     ignored. Defaults to "---".
     """
-    split_lines = trim_docstring(docstring).split("\n")
+    pass
 
-    if delimiter is not None:
-        # Info is separated from rest of docstring by a `delimiter` line
-        for index, line in enumerate(split_lines):
-            if line.lstrip().startswith(delimiter):
-                cut_at = index
-                break
-        else:
-            cut_at = index + 1
-        split_lines = split_lines[:cut_at]
-
-    # Description is separated from summary by an empty line
-    for index, line in enumerate(split_lines):
-        if line.strip() == "":
-            summary_lines = split_lines[:index]
-            description_lines = split_lines[index + 1 :]
-            break
-    else:
-        summary_lines = split_lines
-        description_lines = []
-
-    info = {}
-    if summary_lines:
-        info["summary"] = dedent("\n".join(summary_lines))
-    if description_lines:
-        info["description"] = dedent("\n".join(description_lines))
-    return info
-
-
-# Copied from Flask
 def unpack_tuple_response(rv):
     """Unpack a flask Response tuple"""
-
-    status = headers = None
-
-    # unpack tuple returns
-    # Unlike Flask, we check exact type because tuple subclasses may be
-    # returned by view functions and paginated/dumped
-    if type(rv) is tuple:  # pylint: disable=unidiomatic-typecheck
-        len_rv = len(rv)
-
-        # a 3-tuple is unpacked directly
-        if len_rv == 3:
-            rv, status, headers = rv
-        # decide if a 2-tuple has status or headers
-        elif len_rv == 2:
-            if isinstance(rv[1], (Headers, dict, tuple, list)):
-                rv, headers = rv
-            else:
-                rv, status = rv
-        # other sized tuples are not allowed
-        else:
-            raise TypeError(
-                "The view function did not return a valid response tuple."
-                " The tuple must have the form (body, status, headers),"
-                " (body, status), or (body, headers)."
-            )
-
-    return rv, status, headers
-
+    pass
 
 def set_status_and_headers_in_response(response, status, headers):
     """Set status and headers in flask Response object"""
-    if headers:
-        response.headers.extend(headers)
-    if status is not None:
-        if isinstance(status, int):
-            response.status_code = status
-        else:
-            response.status = status
-
+    pass
 
 def prepare_response(response, spec, content_type):
     """Rework response according to OAS version"""
     pass
-
 
 def normalize_config_prefix(config_prefix):
     """Normalize API config prefix
@@ -138,7 +58,6 @@ def normalize_config_prefix(config_prefix):
     :return: Normalized prefix
     """
     pass
-
 
 class PrefixedMappingProxy(abc.Mapping):
     """Mapping to proxy another mapping using a prefix
@@ -159,7 +78,7 @@ class PrefixedMappingProxy(abc.Mapping):
         return self._dict[self.prefix + str(key)]
 
     def __iter__(self):
-        return iter(x for x in self._dict if x.startswith(self.prefix))
+        return iter((x for x in self._dict if x.startswith(self.prefix)))
 
     def __len__(self):
-        return sum(1 for _ in iter(self))
+        return sum((1 for _ in iter(self)))

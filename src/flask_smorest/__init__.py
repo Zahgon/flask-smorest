@@ -58,30 +58,7 @@ class Api(APISpecMixin, ErrorHandlerMixin):
         :param spec_kwargs: kwargs to pass to internal APISpec instance.
             Updates ``spec_kwargs`` passed in ``Api`` init.
         """
-        self._app = app
-        self.config = PrefixedMappingProxy(app.config, self.config_prefix)
-
-        # Register flask-smorest in app extensions
-        app.extensions = getattr(app, "extensions", {})
-        ext = app.extensions.setdefault(
-            "flask-smorest",
-            {
-                # Config prefix -> {"ext_obj": Api instance}
-                "apis": {},
-                # Blueprint name -> Api instance
-                "blp_name_to_api": {},
-            },
-        )
-        ext["apis"][self.config_prefix] = {"ext_obj": self}
-
-        # Initialize spec
-        self._init_spec(**{**self._spec_kwargs, **(spec_kwargs or {})})
-
-        # Initialize blueprint serving spec
-        self._register_doc_blueprint()
-
-        # Register error handlers
-        self._register_error_handlers()
+        pass
 
     def register_blueprint(self, blp, *, parameters=None, **options):
         """Register a blueprint in the application
@@ -96,20 +73,4 @@ class Api(APISpecMixin, ErrorHandlerMixin):
 
         Must be called after app is initialized.
         """
-        blp_name = options.get("name", blp.name)
-
-        self._app.extensions["flask-smorest"]["blp_name_to_api"][blp_name] = self
-
-        self._app.register_blueprint(blp, **options)
-
-        # Register views in API documentation for this resource
-        blp.register_views_in_doc(
-            self,
-            self._app,
-            self.spec,
-            name=blp_name,
-            parameters=parameters,
-        )
-
-        # Add tag relative to this resource to the global tag list
-        self.spec.tag({"name": blp_name, "description": blp.description})
+        pass

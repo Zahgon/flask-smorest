@@ -38,12 +38,12 @@ class PaginationParameters:
     @property
     def first_item(self):
         """Return first item number"""
-        return (self.page - 1) * self.page_size
+        pass
 
     @property
     def last_item(self):
         """Return last item number"""
-        return self.first_item + self.page_size - 1
+        pass
 
     def __repr__(self):
         return (
@@ -71,7 +71,7 @@ def _pagination_parameters_schema_factory(def_page, def_page_size, def_max_page_
 
         @ma.post_load
         def make_paginator(self, data, **kwargs):
-            return PaginationParameters(**data)
+            pass
 
     return PaginationParametersSchema
 
@@ -102,7 +102,7 @@ class Page:
 
     @property
     def item_count(self):
-        return len(self.collection)
+        pass
 
     def __repr__(self):
         return (
@@ -184,48 +184,7 @@ class PaginationMixin:
 
         def decorator(func):
             @wraps(func)
-            def wrapper(*args, **kwargs):
-                page_params = self.PAGINATION_ARGUMENTS_PARSER.parse(
-                    page_params_schema, request, location="query"
-                )
-
-                # Pagination in resource code: inject page_params as kwargs
-                if pager is None:
-                    kwargs["pagination_parameters"] = page_params
-
-                # Execute decorated function
-                result, status, headers = unpack_tuple_response(
-                    current_app.ensure_sync(func)(*args, **kwargs)
-                )
-
-                # Post pagination: use pager class to paginate the result
-                if pager is not None:
-                    result = pager(result, page_params=page_params).items
-
-                # Set pagination metadata in response
-                if self.PAGINATION_HEADER_NAME is not None:
-                    if page_params.item_count is None:
-                        warnings.warn(
-                            f"item_count not set in endpoint {request.endpoint}.",
-                            stacklevel=2,
-                        )
-                    else:
-                        result, headers = self._set_pagination_metadata(
-                            page_params, result, headers
-                        )
-
-                return result, status, headers
-
-            # Add pagination params to doc info in wrapper object
-            wrapper._apidoc = deepcopy(getattr(wrapper, "_apidoc", {}))
-            wrapper._apidoc["pagination"] = {
-                "parameters": parameters,
-                "response": {
-                    error_status_code: http.HTTPStatus(error_status_code).name,
-                },
-            }
-
-            return wrapper
+            pass
 
         return decorator
 
@@ -275,24 +234,7 @@ class PaginationMixin:
 
         Override this to document custom pagination metadata
         """
-        resp_doc.setdefault("headers", {}).update(
-            {
-                self.PAGINATION_HEADER_NAME: (
-                    "PAGINATION"
-                    if spec.openapi_version.major >= 3
-                    else PAGINATION_HEADER
-                )
-            }
-        )
+        pass
 
     def _prepare_pagination_doc(self, doc, doc_info, *, spec, **kwargs):
-        operation = doc_info.get("pagination")
-        if operation:
-            doc.setdefault("parameters", []).append(operation["parameters"])
-            doc.setdefault("responses", {}).update(operation["response"])
-            success_status_codes = doc_info.get("success_status_codes", [])
-            for success_status_code in success_status_codes:
-                self._document_pagination_metadata(
-                    spec, doc["responses"][success_status_code]
-                )
-        return doc
+        pass

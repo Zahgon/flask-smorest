@@ -83,52 +83,7 @@ class ResponseMixin:
 
         def decorator(func):
             @wraps(func)
-            def wrapper(*args, **kwargs):
-                # Execute decorated function
-                result_raw, r_status_code, r_headers = unpack_tuple_response(
-                    current_app.ensure_sync(func)(*args, **kwargs)
-                )
-
-                # If return value is a werkzeug Response, return it
-                if isinstance(result_raw, Response):
-                    set_status_and_headers_in_response(
-                        result_raw, r_status_code, r_headers
-                    )
-                    return result_raw
-
-                # Dump result with schema if specified
-                if schema is None:
-                    result_dump = result_raw
-                else:
-                    result_dump = schema.dump(result_raw)
-
-                # Store result in appcontext (may be used for ETag computation)
-                appcontext = get_appcontext()
-                appcontext["result_dump"] = result_dump
-
-                # Build response
-                resp = jsonify(self._prepare_response_content(result_dump))
-                set_status_and_headers_in_response(resp, r_status_code, r_headers)
-                if r_status_code is None:
-                    resp.status_code = status_code
-
-                return resp
-
-            # Store doc in wrapper function
-            # The deepcopy avoids modifying the wrapped function doc
-            # In OAS 3, there may be several responses for the same status code
-            wrapper._apidoc = deepcopy(getattr(wrapper, "_apidoc", {}))
-            (
-                wrapper._apidoc.setdefault("response", {})
-                .setdefault("responses", {})
-                .setdefault(status_code, [])
-                .append(resp_doc)
-            )
-            # Indicate this code is a success status code
-            # Helps other decorators documenting success responses
-            wrapper._apidoc.setdefault("success_status_codes", []).append(status_code)
-
-            return wrapper
+            pass
 
         return decorator
 
@@ -169,52 +124,7 @@ class ResponseMixin:
 
         See :ref:`document-alternative-responses`.
         """
-        # Response ref is passed
-        if response is not None:
-            resp_doc = response
-        # Otherwise, build response description
-        else:
-            schema = resolve_schema_instance(schema)
-
-            # Document response (schema, description,...) in the API doc
-            doc_schema = self._make_doc_response_schema(schema)
-            if description is None:
-                description = http.HTTPStatus(int(status_code)).phrase
-            resp_doc = remove_none(
-                {
-                    "schema": doc_schema,
-                    "description": description,
-                    "example": example,
-                    "examples": examples,
-                    "headers": headers,
-                }
-            )
-            resp_doc["content_type"] = content_type
-
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                return current_app.ensure_sync(func)(*args, **kwargs)
-
-            # Store doc in wrapper function
-            # The deepcopy avoids modifying the wrapped function doc
-            # In OAS 3, there may be several responses for the same status code
-            wrapper._apidoc = deepcopy(getattr(wrapper, "_apidoc", {}))
-            (
-                wrapper._apidoc.setdefault("response", {})
-                .setdefault("responses", {})
-                .setdefault(status_code, [])
-                .append(resp_doc)
-            )
-            if success:
-                # Indicate this code is a success status code
-                # Helps other decorators documenting success responses
-                wrapper._apidoc.setdefault("success_status_codes", []).append(
-                    status_code
-                )
-            return wrapper
-
-        return decorator
+        pass
 
     @staticmethod
     def _make_doc_response_schema(schema):
@@ -254,54 +164,4 @@ class ResponseMixin:
 
     @staticmethod
     def _prepare_response_doc(doc, doc_info, *, api, spec, **kwargs):
-        operation = doc_info.get("response", {})
-        # Document default error response
-        if api.DEFAULT_ERROR_RESPONSE_NAME:
-            (
-                operation.setdefault("responses", {})
-                .setdefault("default", [])
-                .append(api.DEFAULT_ERROR_RESPONSE_NAME)
-            )
-        if operation:
-            # OAS 2: set "produces"
-            # TODO: The list of content types should contain those used by other
-            # decorators (error responses, mainly). In the general case, those
-            # responses use DEFAULT_RESPONSE_CONTENT_TYPE which appears in the list
-            # if used in response, alt_response or if DEFAULT_ERROR_RESPONSE_NAME
-            # is set, so it will only be slightly incomplete in corner cases.
-            if spec.openapi_version.major < 3:
-                content_types = set()
-                for responses in operation["responses"].values():
-                    for response in responses:
-                        if isinstance(response, abc.Mapping):
-                            content_type = (
-                                response["content_type"]
-                                or api.DEFAULT_RESPONSE_CONTENT_TYPE
-                            )
-                        else:
-                            content_type = api.DEFAULT_RESPONSE_CONTENT_TYPE
-                        content_types.add(content_type)
-                if content_types != {api.DEFAULT_RESPONSE_CONTENT_TYPE}:
-                    operation["produces"] = list(content_types)
-            # OAS2 / OAS 3: adapt response to OAS version
-            # In OAS 3 there may be several responses with different content
-            # types for a given status code.
-            # However, only a single response reference may be passed. If a
-            # response is a response reference, use this response.
-            for status_code in operation["responses"].keys():
-                resp = {}
-                # Reverse the list so that the responses provided in top
-                # decorators appear first in the doc
-                for response in reversed(operation["responses"][status_code]):
-                    if not isinstance(response, abc.Mapping):
-                        resp = response
-                        break
-                    content_type = (
-                        response.pop("content_type")
-                        or api.DEFAULT_RESPONSE_CONTENT_TYPE
-                    )
-                    prepare_response(response, spec, content_type)
-                    resp = deepupdate(resp, response)
-                operation["responses"][status_code] = resp
-            doc = deepupdate(doc, operation)
-        return doc
+        pass

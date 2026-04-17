@@ -125,19 +125,7 @@ def set_status_and_headers_in_response(response, status, headers):
 
 def prepare_response(response, spec, content_type):
     """Rework response according to OAS version"""
-    # OAS 2
-    if spec.openapi_version.major < 3:
-        if "example" in response:
-            response["examples"] = {content_type: response.pop("example")}
-    # OAS 3
-    else:
-        for field in ("schema", "example", "examples"):
-            if field in response:
-                (
-                    response.setdefault("content", {}).setdefault(content_type, {})[
-                        field
-                    ]
-                ) = response.pop(field)
+    pass
 
 
 def normalize_config_prefix(config_prefix):
@@ -149,10 +137,7 @@ def normalize_config_prefix(config_prefix):
 
     :return: Normalized prefix
     """
-    result = config_prefix.strip().upper()
-    if result and not result.endswith("_"):
-        result += "_"
-    return result
+    pass
 
 
 class PrefixedMappingProxy(abc.Mapping):

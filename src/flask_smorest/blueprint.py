@@ -157,11 +157,7 @@ class Blueprint(
         """
 
         def decorator(func):
-            endpoint = options.pop("endpoint", None)
-            self.add_url_rule(
-                rule, endpoint, func, parameters=parameters, tags=tags, **options
-            )
-            return func
+            pass
 
         return decorator
 
@@ -178,17 +174,7 @@ class Blueprint(
 
         See :ref:`register-nested-blueprints`.
         """
-        blp_name = options.get("name", blueprint.name)
-
-        # Inherit all endpoints
-        self._docs.update(
-            {
-                ".".join((blp_name, endpoint_name)): doc
-                for endpoint_name, doc in blueprint._docs.items()
-            }
-        )
-
-        return super().register_blueprint(blueprint, **options)
+        pass
 
     def _store_endpoint_docs(self, endpoint, obj, parameters, tags, **options):
         """Store view or function doc info"""
@@ -235,47 +221,7 @@ class Blueprint(
 
         "schema":{"$ref": "#/components/schemas/MySchema"}
         """
-        url_prefix_parameters = parameters or []
-
-        # This method uses the documentation information associated with each
-        # endpoint in self._docs to provide documentation for corresponding
-        # route to the spec object.
-        # Deepcopy to avoid mutating the source. Allows registering blueprint
-        # multiple times (e.g. when creating multiple apps during tests).
-        for endpoint, endpoint_doc_info in deepcopy(self._docs).items():
-            endpoint_route_parameters = endpoint_doc_info.pop("parameters") or []
-            endpoint_parameters = url_prefix_parameters + endpoint_route_parameters
-            doc = {}
-            # Use doc info stored by decorators to generate doc
-            for method_l, operation_doc_info in endpoint_doc_info.items():
-                tags = operation_doc_info.pop("tags")
-                operation_doc = {}
-                for func in self._prepare_doc_cbks:
-                    operation_doc = func(
-                        operation_doc,
-                        operation_doc_info,
-                        api=api,
-                        app=app,
-                        spec=spec,
-                        method=method_l,
-                    )
-                operation_doc.update(operation_doc_info["docstring"])
-                # Tag all operations with Blueprint name unless tags specified
-                operation_doc["tags"] = (
-                    tags
-                    if tags is not None
-                    else [
-                        name,
-                    ]
-                )
-                # Complete doc with manual doc info
-                manual_doc = operation_doc_info.get("manual_doc", {})
-                doc[method_l] = deepupdate(operation_doc, manual_doc)
-
-            # Thanks to self.route, there can only be one rule per endpoint
-            full_endpoint = ".".join((name, endpoint))
-            rule = next(app.url_map.iter_rules(full_endpoint))
-            spec.path(rule=rule, operations=doc, parameters=endpoint_parameters)
+        pass
 
     @staticmethod
     def doc(**kwargs):
@@ -294,28 +240,10 @@ class Blueprint(
 
         def decorator(func):
             @wraps(func)
-            def wrapper(*f_args, **f_kwargs):
-                return current_app.ensure_sync(func)(*f_args, **f_kwargs)
-
-            # The deepcopy avoids modifying the wrapped function doc
-            wrapper._apidoc = deepcopy(getattr(wrapper, "_apidoc", {}))
-            wrapper._apidoc["manual_doc"] = deepupdate(
-                deepcopy(wrapper._apidoc.get("manual_doc", {})), kwargs
-            )
-            return wrapper
+            pass
 
         return decorator
 
     def _decorate_view_func_or_method_view(self, decorator, obj):
         """Apply decorator to view func or MethodView HTTP methods"""
-
-        # Decorating a MethodView decorates all HTTP methods
-        if isinstance(obj, type(MethodView)):
-            for method in self.HTTP_METHODS:
-                if method in obj.methods:
-                    method_l = method.lower()
-                    func = getattr(obj, method_l)
-                    setattr(obj, method_l, decorator(func))
-            return obj
-
-        return decorator(obj)
+        pass

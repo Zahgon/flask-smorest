@@ -7,12 +7,7 @@ from .exceptions import CurrentApiNotAvailableError
 
 
 def _find_current_api():
-    blp_name_to_api = current_app.extensions["flask-smorest"]["blp_name_to_api"]
-    for blp_name in request.blueprints:
-        api = blp_name_to_api.get(blp_name)
-        if api:
-            return api
-    raise CurrentApiNotAvailableError("Current Blueprint not registered in any Api.")
+    pass
 
 
 # Proxy for the current Api. Only available within a request context and only

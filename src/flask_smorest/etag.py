@@ -61,35 +61,7 @@ class EtagMixin:
 
         See :doc:`ETag <etag>`.
         """
-
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                etag_enabled = self._is_etag_enabled()
-
-                if etag_enabled:
-                    # Check etag precondition
-                    self._check_precondition()
-
-                # Execute decorated function
-                resp = current_app.ensure_sync(func)(*args, **kwargs)
-
-                if etag_enabled:
-                    # Verify check_etag was called in resource code if needed
-                    self._verify_check_etag()
-                    # Add etag value to response
-                    self._set_etag_in_response(resp)
-
-                return resp
-
-            # Note function is decorated by etag in doc info
-            # The deepcopy avoids modifying the wrapped function doc
-            wrapper._apidoc = deepcopy(getattr(wrapper, "_apidoc", {}))
-            wrapper._apidoc["etag"] = True
-
-            return wrapper
-
-        return self._decorate_view_func_or_method_view(decorator, obj)
+        pass
 
     @staticmethod
     def _generate_etag(etag_data, extra_data=None):
@@ -115,10 +87,7 @@ class EtagMixin:
 
         Called automatically for PUT, PATCH and DELETE methods
         """
-        # TODO: other methods?
-        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Match
-        if request.method in self.METHODS_NEEDING_CHECK_ETAG and not request.if_match:
-            raise PreconditionRequired
+        pass
 
     def check_etag(self, etag_data, etag_schema=None):
         """Compare If-Match header with computed ETag
@@ -134,18 +103,7 @@ class EtagMixin:
         Issues a warning if called in a method other than PUT, PATCH, or
         DELETE.
         """
-        if request.method not in self.METHODS_NEEDING_CHECK_ETAG:
-            warnings.warn(
-                f"ETag cannot be checked on {request.method} request.",
-                stacklevel=2,
-            )
-        if self._is_etag_enabled():
-            if etag_schema is not None:
-                etag_data = resolve_schema_instance(etag_schema).dump(etag_data)
-            new_etag = self._generate_etag(etag_data)
-            _get_etag_ctx()["etag_checked"] = True
-            if new_etag not in request.if_match:
-                raise PreconditionFailed
+        pass
 
     def _is_etag_enabled(self):
         """Return True if ETag feature is enabled api-wise"""
@@ -160,13 +118,7 @@ class EtagMixin:
         This is called automatically. It is meant to warn the developer about
         an issue in his ETag management.
         """
-        if request.method in self.METHODS_NEEDING_CHECK_ETAG:
-            if not _get_etag_ctx().get("etag_checked"):
-                warnings.warn(
-                    f"ETag not checked in endpoint {request.endpoint} "
-                    f"on {request.method} request.",
-                    stacklevel=2,
-                )
+        pass
 
     def _check_not_modified(self, etag):
         """Raise NotModified if etag is in If-None-Match header
@@ -212,38 +164,7 @@ class EtagMixin:
         If no ETag data was computed using set_etag, it is computed here from
         response data.
         """
-        if request.method in self.METHODS_ALLOWING_SET_ETAG:
-            new_etag = _get_etag_ctx().get("etag")
-            # If no ETag data was manually provided, use response content
-            if new_etag is None:
-                etag_data = get_appcontext()["result_dump"]
-                extra_data = tuple(
-                    (k, v)
-                    for k, v in response.headers
-                    if k in self.ETAG_INCLUDE_HEADERS
-                )
-                new_etag = self._generate_etag(etag_data, extra_data)
-                self._check_not_modified(new_etag)
-            response.set_etag(new_etag)
+        pass
 
     def _prepare_etag_doc(self, doc, doc_info, *, api, spec, method, **kwargs):
-        if doc_info.get("etag", False) and not api.config.get("ETAG_DISABLED", False):
-            responses = {}
-            method_u = method.upper()
-            if method_u in self.METHODS_CHECKING_NOT_MODIFIED:
-                responses[304] = http.HTTPStatus(304).name
-                doc.setdefault("parameters", []).append("IF_NONE_MATCH")
-            if method_u in self.METHODS_NEEDING_CHECK_ETAG:
-                responses[412] = http.HTTPStatus(412).name
-                responses[428] = http.HTTPStatus(428).name
-                doc.setdefault("parameters", []).append("IF_MATCH")
-            if method_u in self.METHODS_ALLOWING_SET_ETAG:
-                success_status_codes = doc_info.get("success_status_codes", [])
-                for success_status_code in success_status_codes:
-                    doc["responses"][success_status_code].setdefault("headers", {})[
-                        "ETag"
-                    ] = ETAG_HEADER if spec.openapi_version.major < 3 else "ETAG"
-
-            if responses:
-                doc = deepupdate(doc, {"responses": responses})
-        return doc
+        pass
